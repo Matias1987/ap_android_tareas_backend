@@ -1,0 +1,113 @@
+{
+  "info": {
+    "_postman_id": "bb92000a-8cc6-4bd3-9e26-6e3e0d0a5541",
+    "name": "OpDelSol API",
+    "description": "Colección de solicitudes para probar la API de OpDelSol. Inicia sesión con un usuario ADMIN y copia el token devuelto en la variable de colección {{token}} para las rutas protegidas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "REEMPLAZAR_CON_ID_DE_USUARIO" },
+    { "key": "taskId", "value": "REEMPLAZAR_CON_ID_DE_TAREA" }
+  ],
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Iniciar sesión",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@opdelsol.local\",\n  \"password\": \"CambiarEstaClave123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "description": "Cambia el email y la contraseña por credenciales existentes en tu base de datos. La API devuelve un token JWT válido durante 12 horas."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios (requiere ADMIN)",
+      "item": [
+        {
+          "name": "Crear usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Pérez\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"ClaveSegura123!\",\n  \"role\": \"USER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "description": "Campos obligatorios: name, email y password. role admite ADMIN o USER y por defecto es USER. Usa un email que aún no exista."
+          }
+        },
+        {
+          "name": "Actualizar usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Pérez Actualizado\",\n  \"active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] },
+            "description": "Ejemplo de actualización; password también puede enviarse para cambiar la contraseña."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tareas",
+      "item": [
+        {
+          "name": "Crear tarea (requiere ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Revisar inventario\",\n  \"description\": \"Contar y registrar el stock del depósito.\",\n  \"priority\": \"HIGH\",\n  \"dueAt\": \"2026-12-01T17:00:00.000Z\",\n  \"assigneeIds\": [\"REEMPLAZAR_CON_ID_DE_USUARIO\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] },
+            "description": "title es obligatorio. priority admite LOW, NORMAL, HIGH o URGENT. dueAt es opcional en formato ISO 8601. assigneeIds es una lista de IDs de usuarios existentes; puede ser []."
+          }
+        },
+        {
+          "name": "Actualizar tarea (ADMIN o usuario asignado)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] },
+            "description": "status admite PENDING, IN_PROGRESS, COMPLETED, OVERDUE o CANCELLED. Un usuario regular solo puede actualizar status y debe estar asignado a la tarea; un ADMIN también puede enviar otros campos editables como title, description, priority o dueAt."
+          }
+        }
+      ]
+    }
+  ]
+}

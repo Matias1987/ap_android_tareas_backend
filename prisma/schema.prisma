@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  role         Role         @default(USER)
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  createdTasks Task[]       @relation("CreatedTasks")
+  assignments  Assignment[]
+  activities   Activity[]   // Added relation field for Activity
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String       @db.Text
+  status      TaskStatus   @default(PENDING)
+  priority    Priority     @default(NORMAL)
+  createdAt   DateTime     @default(now())
+  dueAt       DateTime?
+  completedAt DateTime?
+  creatorId   String
+  creator     User         @relation("CreatedTasks", fields: [creatorId], references: [id])
+  assignments Assignment[]
+  activities  Activity[]
+
+  @@index([status, dueAt])
+}
+
+model Assignment {
+  taskId     String
+  userId     String
+  assignedAt DateTime @default(now())
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@index([userId])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  action    String
+  details   String?  @db.Text
+  createdAt DateTime @default(now())
+  actorId   String
+  actor     User     @relation(fields: [actorId], references: [id], onDelete: Cascade) // Added explicit relation
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorId]) // Added index for performance
+}
